@@ -31,9 +31,25 @@ syncevolution --configure sync=two-way backend=evolution-contacts database=Perso
 #Start first sync
 syncevolution --sync refresh-from-remote cgoogle pgoogle
 
+
+CONTACT_URL="https://www.google.com/calendar/dav/$USERNAME/events"
+#Create Peer
+syncevolution --configure --template SyncEvolution keyring=no username=$USERNAME password=$PASSWORD syncURL=$CONTACT_URL target-config@googlec
+#Create New Source
+syncevolution --configure backend=evolution-calendar database=Personale @default googlecal
+#Add remote database
+syncevolution --configure database=$CONTACT_URL backend=caldav target-config@googlec googlecal
+#Connect remote contact list with local databases
+syncevolution --configure --template SyncEvolution_Client syncURL=local://@googlec googlec googlecal
+#Add local database to the source
+syncevolution --configure sync=two-way backend=evolution-calendar database=Personale googlec googlecal
+#Start first sync
+syncevolution --sync refresh-from-remote googlec googlecal
+
+
 #Add Sync Cronjob
 sudo mount / -o remount,rw
-COMMAND_LINE="export DISPLAY=:0.0 && export DBUS_SESSION_BUS_ADDRESS=$(ps -u phablet e | grep -Eo 'dbus-daemon.*address=unix:abstract=/tmp/dbus-[A-Za-z0-9]{10}' | tail -c35) && /usr/bin/syncevolution cgoogle"
+COMMAND_LINE="export DISPLAY=:0.0 && export DBUS_SESSION_BUS_ADDRESS=$(ps -u phablet e | grep -Eo 'dbus-daemon.*address=unix:abstract=/tmp/dbus-[A-Za-z0-9]{10}' | tail -c35) && /usr/bin/syncevolution cgoogle && /usr/bin/syncevolution googlec"
 sudo touch /sbin/googlecontactsync
 sudo chmod 666 /sbin/googlecontactsync
 sudo echo "$COMMAND_LINE" > /sbin/googlecontactsync
